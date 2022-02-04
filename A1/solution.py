@@ -8,40 +8,95 @@
 import os  # for time functions
 import math  # for infinity
 from search import *  # for search engines
-from sokoban import sokoban_goal_state, SokobanState, Direction, PROBLEMS  # for Sokoban specific classes and problems
+# for Sokoban specific classes and problems
+from sokoban import sokoban_goal_state, SokobanState, Direction, PROBLEMS
 
 # SOKOBAN HEURISTICS
+
+
 def heur_alternate(state):
     # IMPLEMENT
     '''a better heuristic'''
     '''INPUT: a sokoban state'''
     '''OUTPUT: a numeric value that serves as an estimate of the distance of the state to the goal.'''
-    # heur_manhattan_distance has flaws.
-    # Write a heuristic function that improves upon heur_manhattan_distance to estimate distance between the current state and the goal.
-    # Your function should return a numeric value for the estimate of the distance to the goal.
-    # EXPLAIN YOUR HEURISTIC IN THE COMMENTS. Please leave this function (and your explanation) at the top of your solution file, to facilitate marking.
-    return 0  # CHANGE THIS
+
+    # most of the work here is done in my evaluate_box function
+    # this iterates over all the boxes, and evaluates each one
+    # it returns infinity for unsolvable states
+    # otherwise it returns the manhattan distance to the closest storage
+    # sum it all up and return it as the heuristic
+
+    # very simple, will improve if I have time, mostly focused on 
+    # "punishing" bad states, i.e. unsolvable ones right now
+    return \
+        sum([
+            evaluate_box(box, state)
+            for box
+            in state.boxes
+        ])
+
+
+def evaluate_box(box, state):
+    # evaluates a box in a state
+    # returns a very large number if the box is deadlocked, otherwise
+    # returns the manhattan distance to the closest storage location
+
+    # return 0 if we're at a store already
+    if box in state.storage:
+        return 0
+
+    # return a very large number if we're cornered
+    if (((box[0]-1, box[1]) in state.obstacles)
+            or ((box[0]+1, box[1]) in state.obstacles)
+            or (box[0] == 0 or box[0] == state.width-1)) \
+        and (((box[0], box[1]-1) in state.obstacles)
+             or ((box[0], box[1]+1) in state.obstacles)
+             or (box[1] == 0 or box[1] == state.width-1)):
+        return float('inf')
+
+    # return a very large number if we're against a wall and no stores are against that wall
+    if (box[0] == 0 and 0 not in [store[0] for store in state.storage]) \
+            or (box[1] == 0 and 0 not in [store[1] for store in state.storage]) \
+            or (box[0] == state.width-1 and state.width-1 not in [store[0] for store in state.storage]) \
+            or (box[1] == state.height-1 and state.height-1 not in [store[1] for store in state.storage]):
+        return float('inf')
+
+    # otherwise return the manhattan distance to the closest store
+    return min([
+        mh_dist(box, store)
+        for store
+        in state.storage
+    ])
+
 
 def heur_zero(state):
     '''Zero Heuristic can be used to make A* search perform uniform cost search'''
     return 0
 
+
 def heur_manhattan_distance(state):
-    # IMPLEMENT
     '''admissible sokoban puzzle heuristic: manhattan distance'''
     '''INPUT: a sokoban state'''
     '''OUTPUT: a numeric value that serves as an estimate of the distance of the state to the goal.'''
-    box_locations = state.boxes
-    storage_locations = state.storage
-    total = 0
-    for box in box_locations:
-        min = 9999999
-        for store in storage_locations:
-            val = abs(box[0]-store[0]) + abs(box[1]-store[1])
-            if val < min:
-                min = val
-        total+=min
+
+    total = \
+        sum([
+            min([
+                mh_dist(box, store)
+                for store
+                in state.storage
+            ])
+            for box
+            in state.boxes
+        ])
+
     return total
+
+
+def mh_dist(box, store):
+    # finds the distance between a box and a store using manhattan distance
+    return abs(box[0]-store[0]) + abs(box[1]-store[1])
+
 
 def fval_function(sN, weight):
     # IMPLEMENT
@@ -53,24 +108,35 @@ def fval_function(sN, weight):
     @param float weight: Weight given by Anytime Weighted A star
     @rtype: float
     """
-    return 0 #CHANGE THIS
+    return sN.gval + weight*sN.hval
 
 # SEARCH ALGORITHMS
+
+
 def weighted_astar(initial_state, heur_fn, weight, timebound):
-    # IMPLEMENT    
+    # IMPLEMENT
     '''Provides an implementation of weighted a-star, as described in the HW1 handout'''
     '''INPUT: a sokoban state that represents the start state and a timebound (number of seconds)'''
     '''OUTPUT: A goal state (if a goal is found), else False as well as a SearchStats object'''
     '''implementation of weighted astar algorithm'''
-    return None, None  # CHANGE THIS
 
-def iterative_astar(initial_state, heur_fn, weight=1, timebound=5):  # uses f(n), see how autograder initializes a search line 88
-    # IMPLEMENT
+    se = SearchEngine('custom')
+
+    wrapped_fval_function = (lambda sN: fval_function(sN, weight))
+    se.init_search(initial_state,sokoban_goal_state,heur_fn,wrapped_fval_function)
+
+
+    return se.search(timebound)
+
+
+# uses f(n), see how autograder initializes a search line 88
+def iterative_astar(initial_state, heur_fn, weight=1, timebound=5):
     '''Provides an implementation of realtime a-star, as described in the HW1 handout'''
     '''INPUT: a sokoban state that represents the start state and a timebound (number of seconds)'''
     '''OUTPUT: A goal state (if a goal is found), else False as well as a SearchStats object'''
     '''implementation of iterative astar algorithm'''
-    return None, None #CHANGE THIS
+    return None, None  # CHANGE THIS
+
 
 def iterative_gbfs(initial_state, heur_fn, timebound=5):  # only use h(n)
     # IMPLEMENT
@@ -78,7 +144,4 @@ def iterative_gbfs(initial_state, heur_fn, timebound=5):  # only use h(n)
     '''INPUT: a sokoban state that represents the start state and a timebound (number of seconds)'''
     '''OUTPUT: A goal state (if a goal is found), else False'''
     '''implementation of iterative gbfs algorithm'''
-    return None, None #CHANGE THIS
-
-
-
+    return None, None  # CHANGE THIS
