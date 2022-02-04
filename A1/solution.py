@@ -31,13 +31,17 @@ def heur_manhattan_distance(state):
     '''admissible sokoban puzzle heuristic: manhattan distance'''
     '''INPUT: a sokoban state'''
     '''OUTPUT: a numeric value that serves as an estimate of the distance of the state to the goal.'''
-    # We want an admissible heuristic, which is an optimistic heuristic.
-    # It must never overestimate the cost to get from the current state to the goal.
-    # The sum of the Manhattan distances between each box that has yet to be stored and the storage point nearest to it is such a heuristic.
-    # When calculating distances, assume there are no obstacles on the grid.
-    # You should implement this heuristic function exactly, even if it is tempting to improve it.
-    # Your function should return a numeric value; this is the estimate of the distance to the goal.
-    return 0  # CHANGE THIS
+    box_locations = state.boxes
+    storage_locations = state.storage
+    total = 0
+    for box in box_locations:
+        min = 9999999
+        for store in storage_locations:
+            val = abs(box[0]-store[0]) + abs(box[1]-store[1])
+            if val < min:
+                min = val
+        total+=min
+    return total
 
 def fval_function(sN, weight):
     # IMPLEMENT
