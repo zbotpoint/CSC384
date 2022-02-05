@@ -150,7 +150,7 @@ def iterative_astar(initial_state, heur_fn, weight=10, timebound=5):
 
     se = SearchEngine('custom')
     current_weight = weight
-    end = os.times()[0] + timebound
+    end = os.times()[0] + timebound - 0.04
     result = False
     solution = False
     cost_limits = None
@@ -178,7 +178,7 @@ def iterative_gbfs(initial_state, heur_fn, timebound=5):  # only use h(n)
     '''implementation of iterative gbfs algorithm'''
     
     se = SearchEngine('best_first')
-    end = os.times()[0] + timebound
+    end = os.times()[0] + timebound - 0.04
     result = False
     solution = False
     cost_limits = None
