@@ -112,4 +112,34 @@ def prop_GAC(csp, newVar=None):
     '''Do GAC propagation. If newVar is None we do initial GAC enforce 
        processing all constraints. Otherwise we do GAC enforce with
        constraints containing newVar on GAC Queue'''
-    #IMPLEMENT
+    if newVar:
+        constraints = csp.get_cons_with_var(newVar)
+    else:
+        constraints = csp.get_all_cons()
+
+    dwo = False
+    pruned_values = []
+
+    dwo,pruned_values = gac_enforce(csp,constraints)
+    if dwo:
+        return False, pruned_values
+    return True,pruned_values
+
+
+def gac_enforce(csp,queue):
+    pruned_values = []
+    while queue:
+        c = queue.pop()
+        for v in c.get_scope():
+            for d in v.cur_domain():
+                if not c.has_support(v,d):
+                    v.prune_value(d)
+                    pruned_values.append((v,d))
+                    if not v.cur_domain():
+                        queue = []
+                        return True, pruned_values # dwo occurred
+                    else:
+                        for cp in [con for con in csp.get_cons_with_var(v) if con not in queue]:
+                            queue.append(cp)
+    return False, pruned_values
+
