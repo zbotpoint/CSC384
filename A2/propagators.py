@@ -80,6 +80,8 @@ def prop_FC(csp, newVar=None):
     '''Do forward checking. That is check constraints with 
        only one uninstantiated variable. Remember to keep 
        track of all pruned variable,value pairs and return '''
+
+    # limit the constraints to ones which have newVar in their scope if needed
     if newVar:
         constraints = csp.get_cons_with_var(newVar)
     else:
@@ -89,6 +91,7 @@ def prop_FC(csp, newVar=None):
     pruned_values = []
 
     for c in constraints:
+        # check all the constraints that have only one unassigned variable
         if c.get_n_unasgn() == 1:
            dwo, pruned_values = fc_check(c, c.get_unasgn_vars()[0])
            if dwo:
@@ -100,9 +103,11 @@ def prop_FC(csp, newVar=None):
 def fc_check(constraint, x):
     pruned_values = []
     for d in x.cur_domain():
+        # check if the pair x,d is impossible, if so then prune d from domain
         if not constraint.has_support(x, d):
             x.prune_value(d)
             pruned_values.append((x, d))
+    # if there's nothing left in the domain then return a dwo
     if not x.cur_domain():
         return True, pruned_values
     return False, pruned_values
@@ -112,6 +117,8 @@ def prop_GAC(csp, newVar=None):
     '''Do GAC propagation. If newVar is None we do initial GAC enforce 
        processing all constraints. Otherwise we do GAC enforce with
        constraints containing newVar on GAC Queue'''
+    
+    # limit the constraints to ones which have newVar in their scope if needed
     if newVar:
         constraints = csp.get_cons_with_var(newVar)
     else:
@@ -120,7 +127,10 @@ def prop_GAC(csp, newVar=None):
     dwo = False
     pruned_values = []
 
+    # call GAC enforce on the constraints
     dwo,pruned_values = gac_enforce(csp,constraints)
+
+    # if there was a domain wipeout, return false, otherwise true
     if dwo:
         return False, pruned_values
     return True,pruned_values
@@ -128,17 +138,23 @@ def prop_GAC(csp, newVar=None):
 
 def gac_enforce(csp,queue):
     pruned_values = []
+
+    # while we have constraints left to check for consistency
     while queue:
         c = queue.pop()
         for v in c.get_scope():
             for d in v.cur_domain():
+
+                # check if there are no satisfying assignments for v,d, then prune d
                 if not c.has_support(v,d):
                     v.prune_value(d)
                     pruned_values.append((v,d))
                     if not v.cur_domain():
                         queue = []
+                        # if a domain is empty then return a dwo
                         return True, pruned_values # dwo occurred
                     else:
+                        # append to the queue all the constrains that aren't in queue and have the variable V
                         for cp in [con for con in csp.get_cons_with_var(v) if con not in queue]:
                             queue.append(cp)
     return False, pruned_values
