@@ -6,6 +6,8 @@ import random
 import sys
 import time
 
+from numpy import empty
+
 # You can use the functions in othello_shared to write your AI
 from othello_shared import find_lines, get_possible_moves, get_score, play_move
 
@@ -14,8 +16,12 @@ def eprint(*args, **kwargs): #you can use this for debugging, as it will print t
     
 # Method to compute utility value of terminal state
 def compute_utility(board, color):
-    #IMPLEMENT
-    return 0 #change this!
+    black,white = get_score(board)
+    if color == 1: # black
+        return black - white
+    elif color == 2: # white
+        return white - black
+    return 0 
 
 # Better heuristic value of board
 def compute_heuristic(board, color): #not implemented, optional
@@ -23,13 +29,36 @@ def compute_heuristic(board, color): #not implemented, optional
     return 0 #change this!
 
 ############ MINIMAX ###############################
+def othercolor(color):
+    if color == 1:
+        return 2
+    else:
+        return 1        
+
 def minimax_min_node(board, color, limit, caching = 0):
-    #IMPLEMENT (and replace the line below)
-    return ((0,0),0)
+    enemy = othercolor(color)
+    possible_moves = get_possible_moves(board,enemy)
+    if not possible_moves: # terminal state
+        return (None,compute_utility(board,color))
+    scores = [
+        (minimax_max_node(play_move(board,enemy,move[0],move[1]),color)[1],index) 
+        for index,move
+        in enumerate(possible_moves)
+    ]
+    _score,min_move_index = min(scores)
+    return (possible_moves[min_move_index],_score)
 
 def minimax_max_node(board, color, limit, caching = 0): #returns highest possible utility
-    #IMPLEMENT (and replace the line below)
-    return ((0,0),0)
+    possible_moves = get_possible_moves(board,color)
+    if not possible_moves: # terminal state
+        return (None,compute_utility(board,color))
+    scores = [
+        (minimax_min_node(play_move(board,color,move[0],move[1]),color)[1],index) 
+        for index,move
+        in enumerate(possible_moves)
+    ]
+    _score,max_move_index = max(scores)
+    return (possible_moves[max_move_index],_score)
 
 def select_move_minimax(board, color, limit, caching = 0):
     """
@@ -45,6 +74,7 @@ def select_move_minimax(board, color, limit, caching = 0):
     If caching is OFF (i.e. 0), do NOT use state caching to reduce the number of state evaluations.    
     """
     #IMPLEMENT (and replace the line below)
+    return minimax_max_node(board,color,limit,caching)[0] 
     return (0,0) #change this!
 
 ############ ALPHA-BETA PRUNING #####################
