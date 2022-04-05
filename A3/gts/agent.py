@@ -41,7 +41,11 @@ def minimax_min_node(board, color, limit, caching = 0):
     if not possible_moves: # terminal state
         return (None,compute_utility(board,color))
     scores = [
-        (minimax_max_node(play_move(board,enemy,move[0],move[1]),color)[1],index) 
+        (
+            minimax_max_node(
+                play_move(board, enemy, move[0], move[1]), color, limit, caching)[1],
+            index
+        )
         for index,move
         in enumerate(possible_moves)
     ]
@@ -53,7 +57,11 @@ def minimax_max_node(board, color, limit, caching = 0): #returns highest possibl
     if not possible_moves: # terminal state
         return (None,compute_utility(board,color))
     scores = [
-        (minimax_min_node(play_move(board,color,move[0],move[1]),color)[1],index) 
+        (
+            minimax_min_node(
+                play_move(board, color, move[0], move[1]), color, limit, caching)[1],
+            index
+        )
         for index,move
         in enumerate(possible_moves)
     ]
@@ -73,18 +81,42 @@ def select_move_minimax(board, color, limit, caching = 0):
     If caching is ON (i.e. 1), use state caching to reduce the number of state evaluations.
     If caching is OFF (i.e. 0), do NOT use state caching to reduce the number of state evaluations.    
     """
-    #IMPLEMENT (and replace the line below)
-    return minimax_max_node(board,color,limit,caching)[0] 
-    return (0,0) #change this!
+    return (minimax_max_node(board, color, limit, caching))[0]
 
 ############ ALPHA-BETA PRUNING #####################
 def alphabeta_min_node(board, color, alpha, beta, limit, caching = 0, ordering = 0):
-    #IMPLEMENT (and replace the line below)
-    return ((0,0),0) #change this!
+    possible_moves = get_possible_moves(board, color)
+    if not possible_moves:  # terminal state
+        return (None, compute_utility(board, color))
+
+    best_move = None
+    val = 9999999
+    for move in possible_moves:
+        next_move, next_val = alphabeta_max_node(
+            play_move(board, color, move[0], move[1]), alpha, beta, color, limit, caching)
+        if val > next_val:
+            val, best_move = next_val, move
+        if val <= alpha:
+            return best_move, val
+        beta = min(beta, val)
+    return best_move, val
 
 def alphabeta_max_node(board, color, alpha, beta, limit, caching = 0, ordering = 0):
-    #IMPLEMENT (and replace the line below)
-    return ((0,0),0) #change this!
+    possible_moves = get_possible_moves(board, color)
+    if not possible_moves:  # terminal state
+        return (None, compute_utility(board, color))
+
+    best_move = None
+    val = -9999999
+    for move in possible_moves:
+        next_move, next_val = alphabeta_min_node(
+            play_move(board, color, move[0], move[1]), alpha, beta, color, limit, caching)
+        if val < next_val:
+            val, best_move = next_val, move
+        if val >= beta:
+            return best_move, val
+        alpha = max(alpha, val)
+    return best_move, val
 
 def select_move_alphabeta(board, color, limit, caching = 0, ordering = 0):
     """
@@ -101,8 +133,7 @@ def select_move_alphabeta(board, color, limit, caching = 0, ordering = 0):
     If ordering is ON (i.e. 1), use node ordering to expedite pruning and reduce the number of state evaluations. 
     If ordering is OFF (i.e. 0), do NOT use node ordering to expedite pruning and reduce the number of state evaluations. 
     """
-    #IMPLEMENT (and replace the line below)
-    return (0,0) #change this!
+    return (minimax_max_node(board, color, limit, caching))[0]
 
 ####################################################
 def run_ai():
